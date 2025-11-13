@@ -375,6 +375,16 @@ class UnquantizedFusedMoEMethod(FusedMoEMethodBase, CustomOp):
             zero_expert_type=zero_expert_type,
             num_fused_shared_experts=layer.num_fused_shared_experts,
         )
+        
+        # Log MoE routing if enabled
+        from vllm.model_executor.layers.fused_moe.moe_logger import MoELogger
+        moe_logger = MoELogger.get_instance()
+        if moe_logger.enabled and hasattr(layer, 'layer_idx'):
+            moe_logger.log_routing(
+                layer_idx=layer.layer_idx,
+                topk_ids=topk_ids,
+                topk_weights=topk_weights,
+            )
 
         if self.rocm_aiter_moe_enabled:
             result = self.rocm_aiter_fused_experts(

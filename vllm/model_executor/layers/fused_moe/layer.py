@@ -36,6 +36,7 @@ from vllm.model_executor.layers.fused_moe.modular_kernel import (
     FusedMoEPermuteExpertsUnpermute,
     FusedMoEPrepareAndFinalize,
 )
+from vllm.model_executor.layers.fused_moe.moe_logger import MoELogger
 from vllm.model_executor.layers.fused_moe.rocm_aiter_fused_moe import (
     init_aiter_topK_meta_data,
 )
@@ -286,6 +287,8 @@ class FusedMoE(CustomOp):
         quant_config: Quantization configure.
         enable_eplb: Whether to enable expert parallelism load balancer.
     """
+    
+    _layer_counter = 0  # Class variable to track layer indices
 
     def __init__(
         self,
@@ -322,6 +325,10 @@ class FusedMoE(CustomOp):
         routing_method_type: int | None = None,
     ):
         super().__init__()
+        
+        # Assign unique layer index for MoE logging
+        self.layer_idx = FusedMoE._layer_counter
+        FusedMoE._layer_counter += 1
 
         # Allow disabling of the separate shared experts stream for
         # debug purposes.
@@ -606,6 +613,26 @@ class FusedMoE(CustomOp):
         # Chunked all2all staging tensor
         self.batched_hidden_states: torch.Tensor | None = None
         self.batched_router_logits: torch.Tensor | None = None
+        
+        # Initialize MoE logger and write meta header on first layer
+        if self.layer_idx == 0:
+            moe_logger = MoELogger.get_instance()
+            if moe_logger.enabled:
+                # Try to get model name from vllm_config
+                model_id = "unknown"
+                if vllm_config.model_config is not None:
+                    model_id = getattr(vllm_config.model_config, 'model', 'unknown')
+                
+                # Determine device
+                device = "CPU" if not current_platform.is_cuda_alike() else "GPU"
+                
+                moe_logger.write_meta_header(
+                    model_id=model_id,
+                    top_k=top_k,
+                    num_experts=self.global_num_experts,
+                    device=device,
+                    seed=None,  # Seed will be set by the user in their script
+                )
 
     # Note: maybe_init_modular_kernel should only be called by
     # prepare_communication_buffer_for_model.
@@ -1417,6 +1444,14 @@ class FusedMoE(CustomOp):
             )
 
         assert topk_ids.dtype == indices_type or indices_type is None
+
+        # Log MoE routing if enabled
+        moe_logger = MoELogger.get_instance()
+        if moe_logger.enabled:
+            # Get layer index from the forward context if available
+            # For now, we'll use a counter or pass layer_idx explicitly
+            # This will be called from forward_impl where we have access to self
+            pass  # Actual logging will be done in forward_impl with layer context
 
         # Compute zero expert result if needed
         if (
