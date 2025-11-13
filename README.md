@@ -130,22 +130,21 @@ Output: `expert_hist.png` + `expert_metrics.json`
 ### Sample Metrics (Update After Running)
 
 **Top-3 Experts:**
-1. Expert 5: 1,234 selections (18.2%)
-2. Expert 11: 1,104 selections (16.3%)
-3. Expert 2: 987 selections (14.5%)
+1. 
+2. 
+3. 
 
 **Normalized Distribution:**
-- Shannon Entropy: 3.456 bits
-- Max Entropy: 4.087 bits (for 17 experts)
-- Load Balance: 0.846 (84.6% of perfect balance)
+- Shannon Entropy: 
+- Max Entropy: 
+- Load Balance: 
 
 **Performance Overhead:**
-- No logging: 12.34s
-- With logging: 12.89s
-- Overhead: 0.55s (4.5%)
+- No logging: 
+- With logging: 
+- Overhead: 
 
 **Interpretation:**  
-The routing exhibits fairly balanced expert usage with moderate specialization. Entropy metric of 0.846 indicates that while certain experts (5, 11, 2) are preferred for mathematical reasoning tasks, the load is reasonably distributed across the expert pool rather than heavily concentrated.
 
 
 ## Citation

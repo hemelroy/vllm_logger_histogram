@@ -17,5 +17,5 @@ output_file = "prompts.txt"
 with open(output_file, "w", encoding="utf-8") as f:
     f.write("\n\n---\n\n".join(prompts))
 
-print(f"✓ Saved {len(prompts)} prompts to {output_file}")
-print(f"  Total characters: {sum(len(p) for p in prompts)}")
+print(f"Saved {len(prompts)} prompts to {output_file}")
+print(f"Total characters: {sum(len(p) for p in prompts)}")
